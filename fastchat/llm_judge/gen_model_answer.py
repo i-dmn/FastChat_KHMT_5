@@ -7,6 +7,10 @@ import argparse
 import json
 import os
 import random
+import re
+import shutil
+import subprocess
+import tempfile
 import time
 
 import shortuuid
@@ -16,6 +20,65 @@ from tqdm import tqdm
 from fastchat.llm_judge.common import load_questions, temperature_config
 from fastchat.model import load_model, get_conversation_template
 from fastchat.utils import str_to_torch_dtype
+
+
+PYTHON_CODE_BLOCK = re.compile(
+    r"```(?:python|py)\s*\n(.*?)\n```", re.IGNORECASE | re.DOTALL
+)
+
+
+def analyze_code_security(text, bandit_executable=None):
+    """Scan fenced Python snippets with Bandit and return a JSON-safe report."""
+    code_blocks = PYTHON_CODE_BLOCK.findall(text or "")
+    if not code_blocks:
+        return {"status": "no_python_code", "issues": [], "errors": []}
+
+    executable = bandit_executable or shutil.which("bandit")
+    if executable is None:
+        return {
+            "status": "scanner_unavailable",
+            "issues": [],
+            "errors": ["Bandit not found; install it with `pip install bandit`."],
+        }
+
+    issues, errors = [], []
+    for block_index, code in enumerate(code_blocks, start=1):
+        try:
+            with tempfile.TemporaryDirectory(prefix="fastchat-bandit-") as temp_dir:
+                source_path = os.path.join(temp_dir, "answer.py")
+                with open(source_path, "w", encoding="utf-8") as source_file:
+                    source_file.write(code)
+                result = subprocess.run(
+                    [executable, "-f", "json", "-ll", source_path],
+                    capture_output=True,
+                    text=True,
+                    timeout=30,
+                    check=False,
+                )
+            if result.stdout.strip():
+                report = json.loads(result.stdout)
+                for issue in report.get("results", []):
+                    issues.append(
+                        {
+                            "block": block_index,
+                            "test_id": issue.get("test_id"),
+                            "issue_text": issue.get("issue_text"),
+                            "severity": issue.get("issue_severity"),
+                            "confidence": issue.get("issue_confidence"),
+                            "cwe": issue.get("issue_cwe"),
+                            "line": issue.get("line_number"),
+                        }
+                    )
+            elif result.returncode not in (0, 1):
+                errors.append(
+                    f"Block {block_index}: Bandit exited {result.returncode}: "
+                    f"{result.stderr.strip()}"
+                )
+        except (OSError, subprocess.TimeoutExpired, json.JSONDecodeError) as exc:
+            errors.append(f"Block {block_index}: {type(exc).__name__}: {exc}")
+
+    status = "scanner_error" if errors else ("issues_found" if issues else "clean")
+    return {"status": status, "issues": issues, "errors": errors}
 
 
 def run_eval(
@@ -32,6 +95,7 @@ def run_eval(
     max_gpu_memory,
     dtype,
     revision,
+    security_scan=False,
 ):
     questions = load_questions(question_file, question_begin, question_end)
     # random shuffle the questions to balance the loading
@@ -63,6 +127,7 @@ def run_eval(
                 max_gpu_memory,
                 dtype=dtype,
                 revision=revision,
+                security_scan=security_scan,
             )
         )
 
@@ -82,6 +147,7 @@ def get_model_answers(
     max_gpu_memory,
     dtype,
     revision,
+    security_scan=False,
 ):
     model, tokenizer = load_model(
         model_path,
@@ -175,7 +241,12 @@ def get_model_answers(
                 conv.update_last_message(output)
                 turns.append(output)
 
-            choices.append({"index": i, "turns": turns})
+            choice = {"index": i, "turns": turns}
+            if security_scan:
+                choice["security_reports"] = [
+                    analyze_code_security(turn) for turn in turns
+                ]
+            choices.append(choice)
 
         # Dump answers
         os.makedirs(os.path.dirname(answer_file), exist_ok=True)
@@ -269,6 +340,11 @@ if __name__ == "__main__":
         default="main",
         help="The model revision to load.",
     )
+    parser.add_argument(
+        "--security-scan",
+        action="store_true",
+        help="Scan fenced Python code in generated answers with Bandit (pip install bandit).",
+    )
 
     args = parser.parse_args()
 
@@ -299,6 +375,7 @@ if __name__ == "__main__":
         max_gpu_memory=args.max_gpu_memory,
         dtype=str_to_torch_dtype(args.dtype),
         revision=args.revision,
+        security_scan=args.security_scan,
     )
 
     reorg_answer_file(answer_file)

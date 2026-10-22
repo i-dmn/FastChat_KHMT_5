@@ -26,6 +26,7 @@ API_RETRY_SLEEP = 10
 API_ERROR_OUTPUT = "$ERROR$"
 
 TIE_DELTA = 0.1
+SECURITY_ISSUE_PENALTY = 1.0
 
 # Categories that need reference answers
 NEED_REF_CATS = ["math", "reasoning", "coding", "arena-hard-200"]
@@ -186,6 +187,17 @@ def run_judge_single(question, answer, judge, ref_answer, multi_turn=False):
             f"invalid output format: {judge.prompt_template['output_format']}"
         )
 
+    # Apply the same deterministic security penalty to scanned answers. Legacy
+    # answer files without reports retain their original score.
+    security_reports = answer["choices"][0].get("security_reports", [])
+    security_issues = sum(
+        len(report.get("issues", []))
+        for report in security_reports
+        if isinstance(report, dict)
+    )
+    if rating >= 0:
+        rating = max(0, rating - SECURITY_ISSUE_PENALTY * security_issues)
+
     return rating, user_prompt, judgment
 
 
@@ -213,6 +225,7 @@ def play_a_match_single(match: MatchSingle, output_file: str):
             "user_prompt": user_prompt,
             "judgment": judgment,
             "score": score,
+            "security_reports": answer["choices"][0].get("security_reports", []),
             "turn": turn,
             "tstamp": time.time(),
         }
@@ -563,10 +576,12 @@ def load_pairwise_model_judgments(filename: str):
             winner = obj["winner"]
         elif "g1_winner" in obj and "g2_winner" in obj:
             g1_winner, g2_winner = obj["g1_winner"], obj["g2_winner"]
+            # Both rounds have already been mapped back to model_1/model_2.
+            # Any disagreement is treated as a tie (strict consistency).
             if g1_winner == g2_winner:
                 winner = g1_winner
             else:
-                winner = "inconsistent"
+                winner = "tie"
         else:
             raise ValueError(f"Invalid keys: {list(obj.keys())}")
 

@@ -120,6 +120,25 @@ python gen_judgment.py --mode pairwise-all --model-list [LIST-OF-MODEL-ID] --par
 python show_result.py --mode pairwise-all
 ```
 
+### Independent judge ensemble (pairwise mode)
+
+To reduce self-enhancement bias, generate pairwise judgments with at least three
+independent judge models. Run `gen_judgment.py` once per judge, using the same
+model list, benchmark, and pairwise mode. Each run writes a separate
+`<judge-model>_pair.jsonl` file. Then aggregate those files:
+
+```bash
+python aggregate_judgments.py \
+  --input-files data/mt_bench/model_judgment/judge-one_pair.jsonl data/mt_bench/model_judgment/judge-two_pair.jsonl data/mt_bench/model_judgment/judge-three_pair.jsonl \
+  --output-file data/mt_bench/model_judgment/ensemble_pair.jsonl
+```
+
+Each judge's two presentation orders are checked first; a disagreement counts
+as that judge voting `tie`. The ensemble accepts a winner only when a strict
+majority of the supplied judges agrees. Matches missing from any input file
+are omitted. Use the generated ensemble file with
+`show_result.py --mode pairwise-all --input-file ...`.
+
 ### How to get GPT-3.5/GPT-4/Claude's answer?
 - `python gen_api_answer.py --model [MODEL-NAME]` to generate GPT-3.5/4 and Claude's answers.
 
