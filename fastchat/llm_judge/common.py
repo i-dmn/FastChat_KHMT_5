@@ -418,14 +418,6 @@ def play_a_match_pair(match: MatchPair, output_file: str):
 
 
 def chat_completion_openai(model, conv, temperature, max_tokens, api_dict=None):
-    token_limit = (
-        {"max_completion_tokens": max_tokens}
-        if model.startswith("gpt-6-")
-        else {"max_tokens": max_tokens}
-    )
-    temperature_param = (
-        {} if model.startswith("gpt-6-") else {"temperature": temperature}
-    )
     if api_dict is not None:
         openai.api_base = api_dict["api_base"]
         openai.api_key = api_dict["api_key"]
@@ -433,15 +425,24 @@ def chat_completion_openai(model, conv, temperature, max_tokens, api_dict=None):
     for _ in range(API_MAX_RETRY):
         try:
             messages = conv.to_openai_api_messages()
-            response = openai.ChatCompletion.create(
-                model=model,
-                messages=messages,
-                n=1,
-                **token_limit,
-                **temperature_param,
-            )
+            request_args = {
+                "model": model,
+                "messages": messages,
+                "n": 1,
+            }
+            if model.startswith("gpt-6-"):
+                request_args["max_completion_tokens"] = max_tokens
+                if model == "gpt-6-luna":
+                    request_args["reasoning_effort"] = "none"
+            else:
+                request_args["max_tokens"] = max_tokens
+                request_args["temperature"] = temperature
+
+            response = openai.ChatCompletion.create(**request_args)
             output = response["choices"][0]["message"]["content"]
             break
+        except openai.error.InvalidRequestError:
+            raise
         except openai.error.OpenAIError as e:
             print(type(e), e)
             time.sleep(API_RETRY_SLEEP)

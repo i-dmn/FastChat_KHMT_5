@@ -180,7 +180,7 @@ if __name__ == "__main__":
         default="data/judge_prompts.jsonl",
         help="The file of judge prompts.",
     )
-    parser.add_argument("--judge-model", type=str, default="gpt-4")
+    parser.add_argument("--judge-model", type=str, default="gpt-6-luna")
     parser.add_argument("--baseline-model", type=str, default="gpt-3.5-turbo")
     parser.add_argument(
         "--mode",
@@ -203,6 +203,11 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--parallel", type=int, default=1, help="The number of concurrent API calls."
+    )
+    parser.add_argument(
+        "--yes",
+        action="store_true",
+        help="Run without pausing for interactive confirmation.",
     )
     parser.add_argument(
         "--first-n", type=int, help="A debug option. Only run the first `n` judgments."
@@ -301,7 +306,8 @@ if __name__ == "__main__":
     # Show match stats and prompt enter to continue
     print("Stats:")
     print(json.dumps(match_stat, indent=4))
-    input("Press Enter to confirm...")
+    if not args.yes:
+        input("Press Enter to confirm...")
 
     # Play matches
     if args.parallel == 1:
