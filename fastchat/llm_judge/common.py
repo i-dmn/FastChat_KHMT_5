@@ -418,6 +418,14 @@ def play_a_match_pair(match: MatchPair, output_file: str):
 
 
 def chat_completion_openai(model, conv, temperature, max_tokens, api_dict=None):
+    token_limit = (
+        {"max_completion_tokens": max_tokens}
+        if model.startswith("gpt-6-")
+        else {"max_tokens": max_tokens}
+    )
+    temperature_param = (
+        {} if model.startswith("gpt-6-") else {"temperature": temperature}
+    )
     if api_dict is not None:
         openai.api_base = api_dict["api_base"]
         openai.api_key = api_dict["api_key"]
@@ -429,8 +437,8 @@ def chat_completion_openai(model, conv, temperature, max_tokens, api_dict=None):
                 model=model,
                 messages=messages,
                 n=1,
-                temperature=temperature,
-                max_tokens=max_tokens,
+                **token_limit,
+                **temperature_param,
             )
             output = response["choices"][0]["message"]["content"]
             break
@@ -454,6 +462,15 @@ def chat_completion_openai_azure(model, conv, temperature, max_tokens, api_dict=
     if "azure-" in model:
         model = model[6:]
 
+    token_limit = (
+        {"max_completion_tokens": max_tokens}
+        if model.startswith("gpt-6-")
+        else {"max_tokens": max_tokens}
+    )
+    temperature_param = (
+        {} if model.startswith("gpt-6-") else {"temperature": temperature}
+    )
+
     output = API_ERROR_OUTPUT
     for _ in range(API_MAX_RETRY):
         try:
@@ -462,8 +479,8 @@ def chat_completion_openai_azure(model, conv, temperature, max_tokens, api_dict=
                 engine=model,
                 messages=messages,
                 n=1,
-                temperature=temperature,
-                max_tokens=max_tokens,
+                **token_limit,
+                **temperature_param,
             )
             output = response["choices"][0]["message"]["content"]
             break
@@ -716,7 +733,8 @@ def check_data(questions, model_answers, ref_answers, models, judges):
             if q["category"] not in NEED_REF_CATS:
                 continue
             assert (
-                q["question_id"] in ref_answers[jg.model_name]
+                q["question_id"]
+                in ref_answers.get(jg.model_name, ref_answers["gpt-4"])
             ), f"Missing reference answer to Question {q['question_id']} for judge {jg.model_name}"
 
 

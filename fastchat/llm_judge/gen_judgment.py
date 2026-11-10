@@ -46,7 +46,7 @@ def make_match(
             a_1 = model_answers[m_1][q_id]
             a_2 = model_answers[baseline_model][q_id]
             if ref_answers is not None:
-                ref = ref_answers[judge.model_name][q_id]
+                ref = ref_answers.get(judge.model_name, ref_answers["gpt-4"])[q_id]
                 match = MatchPair(
                     dict(q),
                     m_1,
@@ -86,7 +86,7 @@ def make_match_all_pairs(
                 a_1 = model_answers[m_1][q_id]
                 a_2 = model_answers[m_2][q_id]
                 if ref_answers is not None:
-                    ref = ref_answers[judge.model_name][q_id]
+                    ref = ref_answers.get(judge.model_name, ref_answers["gpt-4"])[q_id]
                     match = MatchPair(
                         dict(q),
                         m_1,
@@ -123,7 +123,7 @@ def make_match_single(
             m = models[i]
             a = model_answers[m][q_id]
             if ref_answers is not None:
-                ref = ref_answers[judge.model_name][q_id]
+                ref = ref_answers.get(judge.model_name, ref_answers["gpt-4"])[q_id]
                 matches.append(
                     MatchSingle(
                         dict(q), m, a, judge, ref_answer=ref, multi_turn=multi_turn
