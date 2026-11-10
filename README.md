@@ -295,7 +295,7 @@ See [docs/langchain_integration](docs/langchain_integration.md).
 ## Evaluation
 We use MT-bench, a set of challenging multi-turn open-ended questions to evaluate models. 
 To automate the evaluation process, we prompt strong LLMs like GPT-4 to act as judges and assess the quality of the models' responses.
-See instructions for running MT-bench at [fastchat/llm_judge](fastchat/llm_judge).
+See instructions for running MT-bench at [fastchat/llm_judge](fastchat/llm_judge), including a [Windows quick start for a hosted candidate model and GPT-6 Luna judge](fastchat/llm_judge/README.md#quick-start-on-windows-with-a-hosted-candidate-model).
 
 MT-bench is the new recommended way to benchmark your models. If you are still looking for the old 80 questions used in the vicuna blog post, please go to [vicuna-blog-eval](https://github.com/lm-sys/vicuna-blog-eval).
 

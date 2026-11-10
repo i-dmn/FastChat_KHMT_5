@@ -412,15 +412,23 @@ def chat_completion_openai(model, conv, temperature, max_tokens, api_dict=None):
     for _ in range(API_MAX_RETRY):
         try:
             messages = conv.to_openai_api_messages()
-            response = openai.ChatCompletion.create(
-                model=model,
-                messages=messages,
-                n=1,
-                temperature=temperature,
-                max_tokens=max_tokens,
-            )
+            request_args = {
+                "model": model,
+                "messages": messages,
+                "n": 1,
+                "temperature": temperature,
+            }
+            if model == "gpt-6-luna":
+                request_args["max_completion_tokens"] = max_tokens
+                request_args["reasoning_effort"] = "none"
+            else:
+                request_args["max_tokens"] = max_tokens
+
+            response = openai.ChatCompletion.create(**request_args)
             output = response["choices"][0]["message"]["content"]
             break
+        except openai.error.InvalidRequestError:
+            raise
         except openai.error.OpenAIError as e:
             print(type(e), e)
             time.sleep(API_RETRY_SLEEP)
