@@ -46,7 +46,15 @@ X = np.arange(len(MODELS))
 SUMMARY = {}
 
 
+BARE = os.environ.get("BIAS_AUDIT_BARE") == "1"   # charts without title/footer, for slide decks
+if BARE:
+    OUT_FIG = "bias_audit/figures_bare"
+    os.makedirs(OUT_FIG, exist_ok=True)
+
+
 def fig(title, sub=None):
+    if BARE:  # smaller canvas, same point sizes -> text ~20% larger once scaled onto a slide
+        return plt.figure(figsize=(11.1, 6.25))
     f = plt.figure(figsize=(13.33, 7.5))
     f.suptitle(title, x=0.04, y=0.965, ha="left", fontsize=21, fontweight="bold")
     if sub:
@@ -55,13 +63,25 @@ def fig(title, sub=None):
 
 
 def foot(f, t):
+    if BARE:
+        return
     f.text(0.04, 0.012, "\n".join(textwrap.wrap("Nguồn: " + t, 158)),
            ha="left", va="bottom", fontsize=9.5, color="#666", linespacing=1.25)
 
 
 def save(f, name):
-    f.savefig(os.path.join(OUT_FIG, name), dpi=200)
+    path = os.path.join(OUT_FIG, name)
+    if BARE:  # tight box keeps axis labels that sit outside the axes; no title/footer to trim
+        f.savefig(path, dpi=200, bbox_inches="tight", pad_inches=0.15)
+    else:
+        f.savefig(path, dpi=200)
     plt.close(f)
+
+
+def side_note(f, x, y, text, **kw):
+    """Explanatory box beside a chart; omitted in bare mode (the slide carries the text)."""
+    if not BARE:
+        f.text(x, y, text, **kw)
 
 
 def words(t):
@@ -89,7 +109,7 @@ ax = f.add_axes([0.07, 0.17, 0.90, 0.66])
 w = 0.38
 SUMMARY["single_mean"] = {}
 for i, (jn, d, _, col) in enumerate(JUDGE_DATA):
-    m = np.array([bootstrap_mean(d[d.model == mo].groupby("question_id").score.mean().values)
+    m = np.array([bootstrap_by_question(d[d.model == mo], lambda x: x.score.mean(), n=2000, seed=0)
                   for mo in MODELS])
     SUMMARY["single_mean"][jn] = dict(zip(MODELS, m[:, 0].round(3).tolist()))
     ax.bar(X + (i - .5) * w, m[:, 0], w, color=col, label=f"{jn} judge",
@@ -392,7 +412,7 @@ ax.set_xlim(-.3, 3.9)
 ax.set_ylabel("Thứ hạng")
 ax.spines[:].set_visible(False)
 g_, l_ = vg["gpt-4"], vg["gpt-6-luna"]
-f.text(0.80, 0.50, "vicuna − guanaco\n(điểm pairwise theo câu):\n"
+side_note(f, 0.80, 0.50, "vicuna − guanaco\n(điểm pairwise theo câu):\n"
                    f"• GPT-4: {g_[0]:+.2f}\n  CI [{g_[1]:.2f}; {g_[2]:.2f}], p = {g_[3]:.2f}\n"
                    f"• Luna: {l_[0]:+.2f}\n  CI [{l_[1]:.3f}; {l_[2]:.2f}], p = {l_[3]:.2f}\n\n"
                    "Không có ý nghĩa ở mức 5%.", fontsize=12, va="center",
@@ -421,7 +441,7 @@ ax.set_yticks(yy)
 ax.set_yticklabels(labs, fontsize=12.5)
 ax.set_xlabel("Số lượt chấm lỗi (gpt-6-luna)")
 ax.set_xlim(0, max(vals) + 3)
-f.text(0.755, 0.50, f"• Pairwise: {len(lp_err)}/800 lượt ({len(lp_err) / 8:.1f}%)\n"
+side_note(f, 0.755, 0.50, f"• Pairwise: {len(lp_err)}/800 lượt ({len(lp_err) / 8:.1f}%)\n"
                     f"• Single: {len(bad_single)}/800 dòng ({len(bad_single) / 8:.2f}%)\n"
                     "• GPT-4 judge: 0 lỗi\n\nCode gọi Luna: reasoning_effort='none',\n"
                     "max_completion_tokens=2048,\nkhông đặt temperature.\nNguyên nhân lỗi: chưa xác định.",
@@ -465,7 +485,7 @@ ax.set_ylim(0, 118)
 ax.set_yticks([0, 20, 40, 60, 80, 100])
 ax.set_ylabel("% nhất quán")
 ax.legend(frameon=False, loc="upper left", ncol=2)
-f.text(0.74, 0.50, "Paper (GPT-4, Bảng 11):\n• gpt-3.5 vs claude-v1: 67.5%\n• gpt-3.5 vs vicuna-13b: 73.8%\n"
+side_note(f, 0.74, 0.50, "Paper (GPT-4, Bảng 11):\n• gpt-3.5 vs claude-v1: 67.5%\n• gpt-3.5 vs vicuna-13b: 73.8%\n"
                    "• gpt-3.5 vs llama-13b: 98.8%\n\nPaper thấy thiên kiến giảm khi\nhai model chênh lệch lớn.\n"
                    "Cặp llama-13b của Luna: chạy\ngen_judgment.py (xem README).", fontsize=12.5, va="center",
        bbox=dict(boxstyle="round", fc="#f4f4f4", ec="#ccc"))
