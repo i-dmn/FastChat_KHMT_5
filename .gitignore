@@ -35,3 +35,4 @@ build
 serve_images
 val2014
 vqa_examples
+!fastchat/llm_judge/bias_audit/results/**

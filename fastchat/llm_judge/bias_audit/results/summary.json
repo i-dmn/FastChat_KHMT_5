@@ -1,0 +1,173 @@
+{
+  "single_mean": {
+    "gpt-4": {
+      "gpt-4": 8.991,
+      "claude-v1": 7.9,
+      "vicuna-13b-v1.3": 6.388,
+      "guanaco-33b": 6.528,
+      "alpaca-13b": 4.531
+    },
+    "gpt-6-luna": {
+      "gpt-4": 6.988,
+      "claude-v1": 5.725,
+      "vicuna-13b-v1.3": 4.506,
+      "guanaco-33b": 4.188,
+      "alpaca-13b": 3.412
+    }
+  },
+  "single_turn": {
+    "gpt-4": {
+      "1": {
+        "gpt-4": 8.956,
+        "claude-v1": 8.15,
+        "vicuna-13b-v1.3": 6.812,
+        "guanaco-33b": 6.881,
+        "alpaca-13b": 4.975
+      },
+      "2": {
+        "gpt-4": 9.025,
+        "claude-v1": 7.65,
+        "vicuna-13b-v1.3": 5.962,
+        "guanaco-33b": 6.175,
+        "alpaca-13b": 4.088
+      }
+    },
+    "gpt-6-luna": {
+      "1": {
+        "gpt-4": 7.538,
+        "claude-v1": 6.405,
+        "vicuna-13b-v1.3": 5.225,
+        "guanaco-33b": 4.688,
+        "alpaca-13b": 3.888
+      },
+      "2": {
+        "gpt-4": 6.405,
+        "claude-v1": 5.09,
+        "vicuna-13b-v1.3": 3.788,
+        "guanaco-33b": 3.608,
+        "alpaca-13b": 2.873
+      }
+    }
+  },
+  "single_pearson_all": 0.727,
+  "score_10_pct": {
+    "gpt-4": 34.4,
+    "gpt-6-luna": 7.2
+  },
+  "pair_winrate": {
+    "gpt-4": {
+      "gpt-4": 0.825,
+      "claude-v1": 0.65,
+      "vicuna-13b-v1.3": 0.375,
+      "guanaco-33b": 0.406,
+      "alpaca-13b": 0.119
+    },
+    "gpt-6-luna": {
+      "gpt-4": 0.721,
+      "claude-v1": 0.513,
+      "vicuna-13b-v1.3": 0.294,
+      "guanaco-33b": 0.235,
+      "alpaca-13b": 0.152
+    }
+  },
+  "position_overall": {
+    "consistent": {
+      "gpt-4": 81.0,
+      "gpt-6-luna": 85.6
+    },
+    "bias_first": {
+      "gpt-4": 6.1,
+      "gpt-6-luna": 5.2
+    },
+    "bias_second": {
+      "gpt-4": 4.6,
+      "gpt-6-luna": 3.6
+    },
+    "split_tie": {
+      "gpt-4": 8.2,
+      "gpt-6-luna": 2.5
+    },
+    "error": {
+      "gpt-4": 0.0,
+      "gpt-6-luna": 3.0
+    }
+  },
+  "position_by_category": {
+    "gpt-4": {
+      "math": 79.0,
+      "reasoning": 85.0,
+      "coding": 72.0,
+      "extraction": 75.0,
+      "roleplay": 82.0,
+      "writing": 83.0,
+      "stem": 87.0,
+      "humanities": 85.0
+    },
+    "gpt-6-luna": {
+      "math": 85.6,
+      "reasoning": 88.0,
+      "coding": 92.2,
+      "extraction": 94.9,
+      "roleplay": 89.0,
+      "writing": 87.0,
+      "stem": 83.8,
+      "humanities": 86.0
+    }
+  },
+  "judge_agreement": {
+    "S1": 59.0,
+    "S1_n": 776,
+    "S2": 78.1,
+    "S2_n": 506
+  },
+  "vicuna_minus_guanaco_pair": {
+    "gpt-4": [
+      -0.031,
+      -0.106,
+      0.041,
+      0.418
+    ],
+    "gpt-6-luna": [
+      0.059,
+      -0.006,
+      0.119,
+      0.059
+    ]
+  },
+  "luna_errors": {
+    "pair": 24,
+    "single": 6,
+    "pair_by_prompt": {
+      "pair-math-v1-multi-turn": 15,
+      "pair-math-v1": 6,
+      "pair-v2-multi-turn": 2,
+      "pair-v2": 1
+    },
+    "gpt4_pair": 0,
+    "gpt4_single": 0
+  },
+  "verbosity_gamma": {
+    "gpt-4": [
+      0.986,
+      0.36,
+      1.656
+    ],
+    "gpt-6-luna": [
+      -0.577,
+      -1.188,
+      0.042
+    ]
+  },
+  "single_partial_corr_score_length": {
+    "gpt-4": [
+      -0.058,
+      -0.156,
+      0.057
+    ],
+    "gpt-6-luna": [
+      -0.136,
+      -0.232,
+      -0.037
+    ]
+  }
+}
