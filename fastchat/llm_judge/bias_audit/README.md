@@ -26,6 +26,27 @@ Data notes:
   so Luna is not guaranteed deterministic, unlike the paper's temperature 0.
 - Prompts sent to both judges are identical (checked on all 800 items).
 
+## ⚠ Prompt confound found (25 Nov 2026)
+
+`data/judge_prompts.jsonl` had been modified before the Luna run: in all four **pairwise** prompts the paper's
+sentence "Do not allow the length of the responses to influence your evaluation." was replaced by an
+"ANTI-VERBOSITY: … a shorter answer should win when it is equally accurate and complete." instruction.
+The **single-answer** prompts were untouched (identical to upstream FastChat).
+
+- GPT-4 pairwise judgments (authors, 2023) used the original prompt. Luna's pairwise judgments most likely used
+  the modified one (it says "concise" in 8.9% of pairwise vs 3.6% of single judgments; GPT-4 shows the opposite).
+- Fixed on this branch: the original prompts are restored; the modified ones are kept as `*-antiverbosity`.
+- Single-answer comparisons are clean. Pairwise Luna results (length γ, position, agreement, turn 2) are provisional.
+
+Clean re-run of Luna pairwise with the paper's prompt (1,600 calls), keeping the old run as a prompt-fix experiment:
+```bash
+git mv data/mt_bench/model_judgment/gpt-6-luna_pair.jsonl \
+       data/mt_bench/model_judgment/gpt-6-luna-antiverbosity_pair.jsonl
+python gen_judgment.py --mode pairwise-baseline --judge-model gpt-6-luna \
+       --model-list gpt-4 claude-v1 vicuna-13b-v1.3 guanaco-33b alpaca-13b llama-13b --parallel 4
+```
+(adding `llama-13b` here also covers the Table 11 run below.)
+
 ## 2. Needs an OpenAI API key (run on your machine)
 
 The cloud sandbox used for the analysis cannot reach api.openai.com, so these must be run locally.

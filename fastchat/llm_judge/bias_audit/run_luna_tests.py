@@ -121,7 +121,10 @@ def cmd_rerun_errors(args):
     n_calls = 0
     for r in rows:
         r = dict(r)
-        sys_prompt = P[r["judge"][1]]["system_prompt"]
+        # The existing Luna pairwise file was produced with the modified "-antiverbosity" prompts
+        # (see README); re-judge its failed rows with that same prompt so the file stays consistent.
+        name = r["judge"][1]
+        sys_prompt = P.get(name + "-antiverbosity", P[name])["system_prompt"]
         for g in ("g1", "g2"):
             if r[f"{g}_winner"] == "error":
                 n_calls += 1

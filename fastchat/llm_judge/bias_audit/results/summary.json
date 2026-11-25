@@ -8,11 +8,11 @@
       "alpaca-13b": 4.531
     },
     "gpt-6-luna": {
-      "gpt-4": 6.988,
-      "claude-v1": 5.725,
+      "gpt-4": 6.975,
+      "claude-v1": 5.752,
       "vicuna-13b-v1.3": 4.506,
-      "guanaco-33b": 4.188,
-      "alpaca-13b": 3.412
+      "guanaco-33b": 4.151,
+      "alpaca-13b": 3.384
     }
   },
   "single_turn": {
